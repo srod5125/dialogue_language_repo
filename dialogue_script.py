@@ -8,16 +8,19 @@ class DialogueLang():
         self.parser = Lark(r"""
             ?start : exchange_blocks+
 
-            ?exchange_blocks : "<" [ordering] "throw" var ["in" state] ">" "{" (statement*|batchprocessing*) "}" -> send_msg
-                            | "<" [ordering] "catch" var ["in" state] ">" "{" (statement*|batchprocessing*) "}" -> receive_msg
-
+            ?exchange_blocks : "<" [ordering] "throw" var ["in" state] ">" "{" (statement|batchprocessing)* "}" -> send_msg
+                            | "<" [ordering] "catch" var ["in" state] ">" "{" (statement|batchprocessing)* "}" -> receive_msg
+            
             ?ordering : "."
 
-            ?batchprocessing : "valve" "(" [_seq{assignment}] ";" [conditional_expr] ";" [_seq{assignment}] ")" "{" statement+ "}" -> batch_process
+            ?batchprocessing : "valve" "(" [initialization] ";" [conditional_expr] ";" [update] ")" "{" statement+ "}" -> batch_process
+
+            ?initialization : _seq{assignment} -> initialize_valve
+            ?update : _seq{assignment} -> update_valve
 
             ?statement : "for" (name "=" arithmatic_expr) "to" conditional_expr "{" statement+ "}" -> for_loop
                         | "forall" name "as" var "{" statement+ "}" -> for_each_loop
-                        | "if" conditional_expr "{" statement+ "}" ( "else" "{" statement+ "}"  )* -> if_statement
+                        | "if" "(" conditional_expr ")" "{" statement+ "}" [( "else" "{" statement+ "}"  )+] -> if_statement
                         | assignment ";"
                         | "send" name ";" -> send
 
@@ -25,7 +28,9 @@ class DialogueLang():
                         | "state" "=" (name|NUMBER) -> state_assign
                         | name "=" dict
                         | name "=" list
+                        | name "=" SINGLE_QUOTED_STRING
                         | name "=" conditional_expr "?" expr ":" expr -> ternary
+                        | "state" "=" conditional_expr "?" expr ":" expr -> state_assign_ternary
                         | name "+=" arithmatic_expr -> plus_equal
             
             ?expr : conditional_expr | arithmatic_expr | string_manipulation_expr
@@ -38,9 +43,10 @@ class DialogueLang():
                                 | (conditional_expr "!=" rest_cond | arithmatic_expr "!=" arithmatic_expr ) -> unequal_condition
                                 | ("state" "!=" var | var "!=" "state") -> state_unequality
                                 | "(" conditional_expr ")"
-                                | arithmatic_expr ">>" rest_aritmatic -> greater_than
-                                | arithmatic_expr "<<" rest_aritmatic -> less_than
-            ?rest_cond : conditional_expr | bool | name
+                                | conditional_expr ">>" rest_cond -> greater_than
+                                | conditional_expr "<<" rest_cond -> less_than
+                                | rest_cond
+            ?rest_cond : expr | bool 
             ?bool : "true" -> true | "false" -> false
 
             ?arithmatic_expr : "(" arithmatic_expr ")"
@@ -53,10 +59,10 @@ class DialogueLang():
 
             ?string_manipulation_expr : string_manipulation_expr "+" rest_string -> string_add
                                         | rest_string
-            ?rest_string : string_manipulation_expr | ESCAPED_STRING | name | "current_state" -> get_current_state
+            ?rest_string : string_manipulation_expr | SINGLE_QUOTED_STRING | name | "current_state" -> get_current_state
 
             
-            ?name:  var | property | dict_value | list_val
+            ?name:  var | property | dict_value | list_val | node_val
             ?var: WORD | CNAME
             ?dict_value : var "[[" (arithmatic_expr|name|string_manipulation_expr)  "]]" -> dict_access
             ?list_val : var "[" (arithmatic_expr)  "]" -> list_access
@@ -66,14 +72,16 @@ class DialogueLang():
                         | "sender" "->" name -> msg_sender
                         | "path" "->" name -> msg_path
 
-            ?dict : "{" [ (NUMBER|ESCAPED_STRING|name) ":" (NUMBER|ESCAPED_STRING|name|bool|dict) ( "," (NUMBER|ESCAPED_STRING|name) ":" (NUMBER|ESCAPED_STRING|name|bool|dict) )* ] "}"
-            ?list : "[" [   (NUMBER|ESCAPED_STRING|name|bool|dict|list) ( "," (NUMBER|ESCAPED_STRING|name|bool|dict|list) )*    ] "]"
+            ?dict : "{" [ (NUMBER|SINGLE_QUOTED_STRING|name) ":" (NUMBER|SINGLE_QUOTED_STRING|name|bool|dict) ( "," (NUMBER|SINGLE_QUOTED_STRING|name) ":" (NUMBER|SINGLE_QUOTED_STRING|name|bool|dict) )* ] "}"
+            ?list : "[" [   (NUMBER|SINGLE_QUOTED_STRING|name|bool|dict|list) ( "," (NUMBER|SINGLE_QUOTED_STRING|name|bool|dict|list) )*    ] "]"
+
+            ?node_val : "@" var -> node_access
             
             ?state: var|NUMBER
+            SINGLE_QUOTED_STRING  : /'[^']*'/
 
             _seq{val}: val ("," val)* 
 
-            %import common.ESCAPED_STRING
             %import common.WORD
             %import common.CNAME
             %import common.NUMBER
@@ -108,25 +116,25 @@ class DialogueLang():
 
 if __name__ == '__main__':
     data = """
-            <throw requestState>
+            <throw request>
             {
                 send request;
             }
             <catch request>
             {
-                response->data = {"state":current_state};
+                response->data = {'state':current_state};
                 send response ;
             }
             <catch response>
             {
-                valve (sum = 0;clock == 4;)
+                valve (;@queue_size == 4 & clock == delta_t;)
                 {
-                    if response->data[["state"]] == ALIVE
+                    if (response->data[['state']] == 'ALIVE')
                     {
                         sum += 1;
                     }
                 }
-                
+                a ='a';
             }
             """
     d_lang = DialogueLang(data)
@@ -150,3 +158,6 @@ if __name__ == '__main__':
                 response->data["state"] = ALIVE
             }
 """
+
+
+# game of life
