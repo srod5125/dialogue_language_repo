@@ -1,0 +1,190 @@
+ https://www.cs.cornell.edu/~asampson/blog/minisynth.html
+
+https://www.cs.cornell.edu/~asampson/blog/
+
+https://emina.github.io/rosette/pubs.html
+
+--
+z3 guide
+https://ericpony.github.io/z3py-tutorial/guide-examples.htm
+www.cs.toronto.edu/~victorn/tutorials/z3_SAT_2019/index.html
+
+
+------
+Clock | Message Rates | MessageType1 : rate
+fields toadd
+import graphtype?
+
+STATE:
+	RECEIVE PHRASE:
+		X: INTERNAL MANAGEMENT
+		Y: REQUEST
+		Z: STATE CHANGE
+		pool xyx, or aggreagate values on clock
+	BROADCAST X | Y:
+		X: REQUESTS
+		Y: STATE
+		Z: HISTORY
+layers??
+
+-
+Create Read Update Delete
+
+Get
+Post
+Put
+Delete
+
+handle,request,broadcast,sendto
+----
+
+
+sumOfStates
+
+state 0:
+	broadcast { get nbrs state : 1 }
+	//broadcast {relay message : condition for boradcast or number of times}
+	receive { nbrs3 state : sum states => sumOfStates }
+	//receive { message received : how to handle }
+	check sumOfStates >=2 ? state 1 : state 0
+	receive, request
+	request {dict{currstate:msytate}, from name to neigbor}#123
+	handle 123 = (waituntil)
+	for all states, state = 0 if sum..
+<game of life>
+state = sum of neibors state >= 2 ? 1 : 0
+state alive:
+	request {states, default neigbors (or selector)}#123  (?how to handle multihop request?)
+	handle 123:
+		for all receveiedObjects:1 
+<busses in city quantamag>
+bus:msg
+onsend,onarrival,enroute,route=(will give programmable route array)
+bus = message{1,2,3,4}
+ONArrival{got to next}
+
+Clock | Message Rates | MessageType1 : rate
+fields toadd
+
+cellName:selector
+<<
+
+>>
+
+data:msg
+<<
+	from,clock
+>>
+
+
+request {"state":current_state} -> handler
+handler (
+	
+)
+==============================
+
+type 
+prtocol 
+invoke
+
+expressivty goals:
+-- steven strogatz fireflies :
+https://www.clear.rice.edu/comp551/papers/MirolloStrogatz-TemporalSynchronization-SIAM1990.pdf
+-- tcp
+-- game of life x
+-- busses in city quantamag x
+-- charged particles
+-- harvard bot 
+-- boolean circuit
+-- kuromato model
+-> virtualization/implementsaw
+cell:
+	if sum(nbrs.status) > 3  then my.status = black else my.status=white
+-----------------
+Lark
+https://lark-parser.readthedocs.io/en/latest/lark_cheatsheet.pdf
+http://blog.erezsh.com/how-to-write-a-dsl-in-python-with-lark/#interpreting-the-parse-tree
+https://dev.to/vicentemaldonado/python-lark-parser-introduction-2g4e
+https://lark-parser.readthedocs.io/en/latest/grammar/
+Http 
+https://developer.mozilla.org/en-US/docs/Web/HTTP
+FSM Protocls
+http://hondo.informatik.uni-freiburg.de/teaching/vorlesung/protocol-design-s09/slides/04-Protocol_Specification_1.pdf
+-----
+
+
+dialogue model:
+// cellular automata, game of life
+throw request [in state X]:
+	request = {"state"}
+	send request
+catch request [in state X]:
+	response->data = {"state":current_state}
+	response->to = path[0]
+	/*
+		filter path:
+			if channel/node capacity full
+			or node.state != Y
+	*/
+	send response
+catch response [in state X]:
+	forall msgs:
+		sum += msgs.data["state"]==ALIVE ? 1 : 0
+	current_state =  sum == 2 or sum == 3 ? ALIVE : DEAD
+
+	 
+
+
+// strogatx 
+<send tick> 
+{
+	amount += delta_t
+	if amount >= threshhold
+	{
+		amount = 0
+		tick->data=threshhold
+		send tick
+	}
+}
+<receive tick> 
+	threshhold = (tick->threshhold - threshhold) / 2
+	
+
+
+recieve msg - [in state X]:
+			// code
+			- [in state Y]:
+			// code
+			- [in state Z]:
+			// switch case syntax
+
+
+//busses in city quantamag
+
+-- as car (sent,arrive,enroute) --
+
+arrive:
+	random(=>neighbors)
+	forall =>neighbors as n:
+	(
+		if n->capacity > 3
+		(
+			path->next = n
+		)
+	)
+	delay += received_tip < delay ? 1 : -1
+	filler += delta_t
+	if filler >= delay
+	(
+		passUp readyToMoveBus = true
+	)
+
+
+
+-- as intersection --
+
+[optional ordering] send/recieve [optional state]
+optional ordering = if random state, assign probability of being in that state
+					behind send declaration, or ordering of states to be followed
+					markov chain
+
