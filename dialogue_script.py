@@ -65,7 +65,11 @@ class DialogueLang():
                                 | conditional_expr "<<" rest_cond -> less_than
                                 | rest_cond
             ?rest_cond : expr | bool 
+<<<<<<< HEAD
             ?bool : "true"->true| "false"->false
+=======
+            ?bool : "true" -> true | "false" -> false 
+>>>>>>> b4f747dc9ab841e949b3d4cf720fa4ab4fb6cc3b
 
             ?arithmatic_expr : "(" arithmatic_expr ")"
                                 | arithmatic_expr "-" rest_aritmatic -> sub
